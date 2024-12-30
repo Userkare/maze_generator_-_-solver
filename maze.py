@@ -6,10 +6,12 @@ from cell import Cell
 
 
 class Maze:
+    animation_spped: float = 0.01
+
     def __init__(self, x1: int, y1: int,
                  num_rows: int, num_cols: int, 
                  cell_size_x: int, cell_size_y: int, 
-                 win: Window = None, seed = None):
+                 win: Window = None, seed = None)-> None:
         self._cells: list[list[Cell]] = []
         self.__x1 = x1
         self.__y1 = y1
@@ -24,10 +26,12 @@ class Maze:
 
         self.__creat_cells()
         self.__break_entrance_and_exit()
-        self.__break_walls_r(0,0)
+        self.__break_walls_r(0, 0)
+        self.__reset_cells_visited()
+        self.solve_depth_first()
         
 
-    def __creat_cells(self):
+    def __creat_cells(self)-> None:
         for colum in range(self.__num_cols):
 
             self._cells.append([])
@@ -36,7 +40,7 @@ class Maze:
                 self._cells[colum].append(Cell(self.__win))
                 self.__draw_call(colum,row)
    
-    def __draw_call(self, x: int, y: int):
+    def __draw_call(self, x: int, y: int)-> None:
             if self.__win is None:
                  return
             x_links = self.__x1 + x * self.__cell_size_x
@@ -50,18 +54,18 @@ class Maze:
 
 
 
-    def __animate(self):
+    def __animate(self)-> None:
          self.__win.redraw()
-         time.sleep(0.001)
+         time.sleep(self.animation_spped)
 
 
-    def __break_entrance_and_exit(self):
+    def __break_entrance_and_exit(self)-> None:
         self._cells[0][0].has_top_wall = False
         self.__draw_call(0,0)
         self._cells[self.__num_cols - 1][self.__num_rows - 1].has_bottom_wall = False
         self.__draw_call(self.__num_cols - 1, self.__num_rows - 1)
 
-    def __break_walls_r(self, x: int, y: int):
+    def __break_walls_r(self, x: int, y: int)-> None:
         #print(f"zerstöre Wälle @ {x}, {y}")
         self._cells[x][y].visited = True
 
@@ -109,5 +113,75 @@ class Maze:
                 self._cells[x][y - 1].has_bottom_wall = False
 
             self.__break_walls_r(next_idex[0],next_idex[1])
+
+    def __reset_cells_visited(self)-> None:
+        for colum in range(self.__num_cols):
+            for row in range(self.__num_rows):
+                self._cells[colum][row].visited = False
+
+    def solve_depth_first (self) -> bool:
+        self.__solve_depth_first_r(0, 0)
+
+    def __solve_depth_first_r(self, x: int, y: int)-> bool:
+        self.__animate()
+
+        if x == self.__num_cols - 1 and y == self.__num_rows - 1:
+            return True
+        
+        self._cells[x][y].visited = True
+
+
+        # right
+        if (x < self.__num_cols - 1 
+            and self._cells[x+1][y].visited == False 
+            and self._cells[x][y].has_right_wall == False):
+
+            self._cells[x][y].draw_move(self._cells[x+1][y])
+            found = self.__solve_depth_first_r(x+1, y)
+            if found:
+                return True
+            else:
+                self._cells[x][y].draw_move(self._cells[x+1][y],True)
+
+        #left
+        if (x >= 1 
+            and self._cells[x-1][y].visited == False 
+            and self._cells[x][y].has_left_wall == False):
+
+            self._cells[x][y].draw_move(self._cells[x-1][y])
+            found = self.__solve_depth_first_r(x-1, y)
+            if found:
+                return True
+            else:
+                self._cells[x][y].draw_move(self._cells[x-1][y],True)
+
+        #bottom
+        if (y < self.__num_rows - 1 
+            and self._cells[x][y+1].visited == False
+            and self._cells[x][y].has_bottom_wall == False):
+            
+            self._cells[x][y].draw_move(self._cells[x][y+1])
+            found = self.__solve_depth_first_r(x, y+1)
+            if found:
+                return True
+            else:
+                self._cells[x][y].draw_move(self._cells[x][y+1],True)
+
+        #top
+        if (y >= 1 
+            and self._cells[x][y-1].visited == False
+            and self._cells[x][y].has_top_wall == False):
+
+            self._cells[x][y].draw_move(self._cells[x][y-1])
+            found = self.__solve_depth_first_r(x, y-1)
+            if found:
+                return True
+            else:
+                self._cells[x][y].draw_move(self._cells[x][y-1],True)
+
+
+        return False
+
+        
 
 

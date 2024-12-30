@@ -3,7 +3,7 @@ from graphics import Window, Point, Line
 
 
 class Cell:
-    def __init__(self, win: Window):
+    def __init__(self, win: Window)-> None:
         
         self.has_left_wall = True
         self.has_right_wall = True 
@@ -48,7 +48,7 @@ class Cell:
             self.__win.draw_line(Line(Point(self.__x_rechs, self.__y_oben), Point(self.__x_rechs, self.__y_unten)), "white")
 
 
-    def Get_center_Point(self):
+    def Get_center_Point(self)-> None:
         return Point((self.__x_links + self.__x_rechs)//2, (self.__y_unten + self.__y_oben)//2)
 
     def draw_move(self, to_cell: "Cell", undo=False):
