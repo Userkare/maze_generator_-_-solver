@@ -1,15 +1,35 @@
-from graphics import Point, Line, Window, Cell
+import unittest
 
-class Tests:
-    haus = [Line(Point(100,100),Point(300,100)),
-            Line(Point(300,100),Point(300,300)),
-            Line(Point(300,300),Point(100,300)),
-            Line(Point(100,300),Point(100,100)),
-            Line(Point(100,300),Point(200,400)),
-            Line(Point(300,300),Point(200,400))]
+from maze import Maze
 
-    def test_haus(self, window: Window):
-        for i in range(len(self.haus)):
-            window.draw_line(self.haus[i], "black")
 
-    
+class Tests(unittest.TestCase):
+    def test_maze_create_cells(self):
+        num_cols = 12
+        num_rows = 10
+        m1 = Maze(0, 0, num_rows, num_cols, 10, 10)
+        self.assertEqual(
+            len(m1._cells),
+            num_cols,
+        )
+        self.assertEqual(
+            len(m1._cells[0]),
+            num_rows,
+        )
+
+    def test_maze_create_cells_large(self):
+        num_cols = 16
+        num_rows = 12
+        m1 = Maze(0, 0, num_rows, num_cols, 10, 10)
+        self.assertEqual(
+            len(m1._cells),
+            num_cols,
+        )
+        self.assertEqual(
+            len(m1._cells[0]),
+            num_rows,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()
