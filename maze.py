@@ -1,3 +1,4 @@
+import random
 import time
 from graphics import Window
 from cell import Cell
@@ -5,8 +6,11 @@ from cell import Cell
 
 
 class Maze:
-    def __init__(self, x1: int, y1: int, num_rows: int, num_cols: int, cell_size_x: int, cell_size_y: int, win: Window ):
-        self.cells: list[list[Cell]] = []
+    def __init__(self, x1: int, y1: int,
+                 num_rows: int, num_cols: int, 
+                 cell_size_x: int, cell_size_y: int, 
+                 win: Window = None, seed = None):
+        self._cells: list[list[Cell]] = []
         self.__x1 = x1
         self.__y1 = y1
         self.__num_rows = num_rows
@@ -15,29 +19,32 @@ class Maze:
         self.__cell_size_y = cell_size_y
         self.__win = win
 
+        if seed is not None:
+             random.seed(seed)
+
         self.__creat_cells()
+        self.__break_entrance_and_exit()
+        self.__break_walls_r(0,0)
+        
 
     def __creat_cells(self):
-        for x in range(self.__num_rows):
+        for colum in range(self.__num_cols):
 
-            self.cells.append([])
-            for y in range(self.__num_cols):
+            self._cells.append([])
+            for row in range(self.__num_rows):
 
-                self.cells[x].append(Cell(self.__win))
-                self.__draw_call(x,y)
-
-
-
-        
+                self._cells[colum].append(Cell(self.__win))
+                self.__draw_call(colum,row)
+   
     def __draw_call(self, x: int, y: int):
             if self.__win is None:
                  return
-            x_min = self.__x1 + x * self.__cell_size_x
-            x_max = self.__x1 + (x + 1) * self.__cell_size_x
-            y_min = self.__y1 + y * self.__cell_size_y
-            y_max = self.__y1 + (y+ 1)  * self.__cell_size_y
+            x_links = self.__x1 + x * self.__cell_size_x
+            x_rechts = self.__x1 + (x + 1) * self.__cell_size_x
+            y_oben = self.__y1 + y * self.__cell_size_y
+            y_unten = self.__y1 + (y+ 1)  * self.__cell_size_y
 
-            self.cells[x][y].draw(x_min, x_max, y_min, y_max)
+            self._cells[x][y].draw(x_links, x_rechts, y_unten, y_oben)
 
             self.__animate()
 
@@ -45,5 +52,62 @@ class Maze:
 
     def __animate(self):
          self.__win.redraw()
-         time.sleep(0.05)
+         time.sleep(0.001)
+
+
+    def __break_entrance_and_exit(self):
+        self._cells[0][0].has_top_wall = False
+        self.__draw_call(0,0)
+        self._cells[self.__num_cols - 1][self.__num_rows - 1].has_bottom_wall = False
+        self.__draw_call(self.__num_cols - 1, self.__num_rows - 1)
+
+    def __break_walls_r(self, x: int, y: int):
+        #print(f"zerstöre Wälle @ {x}, {y}")
+        self._cells[x][y].visited = True
+
+        while True:
+            to_visit: list[tuple[int,int]] = []
+            if x >= 1 and self._cells[x-1][y].visited == False:
+                to_visit.append((x-1,y))
+
+            if x < self.__num_cols - 1 and self._cells[x+1][y].visited == False:
+                to_visit.append((x+1,y))
+
+            if y >= 1 and self._cells[x][y-1].visited == False:
+                to_visit.append((x,y-1))
+
+            if y < self.__num_rows - 1 and self._cells[x][y+1].visited == False:
+                to_visit.append((x,y+1))
+
+            posibil_directions=len(to_visit)
+            if posibil_directions == 0:
+                self.__draw_call(x,y)
+                return
+
+            random_direction = random.randrange(posibil_directions)
+            next_idex = to_visit[random_direction]
+
+
+            if next_idex[0] == x + 1:
+                print(f"zerstöre right @ {x}, {y}")
+                self._cells[x][y].has_right_wall = False
+                self._cells[x + 1][y].has_left_wall = False
+
+            if next_idex[0] == x - 1:
+                print(f"zerstöre left @ {x}, {y}")
+                self._cells[x][y].has_left_wall = False
+                self._cells[x - 1][y].has_right_wall = False
+
+            if next_idex[1] == y + 1:
+                print(f"zerstöre bottom @ {x}, {y}")
+                self._cells[x][y].has_bottom_wall = False
+                self._cells[x][y + 1].has_top_wall = False
+
+            if next_idex[1] == y - 1:
+                print(f"zerstöre top  @ {x}, {y}")
+                self._cells[x][y].has_top_wall = False
+                self._cells[x][y - 1].has_bottom_wall = False
+
+            self.__break_walls_r(next_idex[0],next_idex[1])
+
 
